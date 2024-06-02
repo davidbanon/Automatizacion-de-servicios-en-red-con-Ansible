@@ -1,0 +1,18 @@
+[nodos]
+192.168.0.2 ansible_connection=local
+192.168.0.10 ansible_user=davidc
+192.168.0.20 ansible_user=davidc2
+
+
+
+[nodos]
+192.168.0.2 ansible_user=david
+192.168.0.10 ansible_connection=local
+192.168.0.20 ansible_user=davidc2
+
+
+
+[nodos]
+192.168.0.2 ansible_user=david
+192.168.0.10 ansible_user=davidc
+192.168.0.20 ansible_connection=local

@@ -1,0 +1,41 @@
+- hosts: nodos
+  gather_facts: no
+  tasks:
+
+    - name: Verificar si Python está instalado
+      raw: test -e /usr/bin/python || echo 'python_not_installed'
+      ignore_errors: yes
+      register: python_check
+
+    - name: Instalar Python si no está instalado
+      raw: test -e /usr/bin/python || (apt-get update && apt-get install -y python-minimal)
+      when: python_check.stdout == 'python_not_installed'
+
+    - name: Verificar si Ansible está instalado en las máquinas
+      stat:
+        path: /usr/bin/ansible
+      register: ansible_check
+      ignore_errors: true
+
+    - name: Instalar Ansible si no está instalado en las máquinas
+      raw: sudo apt-get install -y ansible
+      when: ansible_check.stat.exists == false
+
+    - name: Verificar si existe el archivo /hosts en las máquinas
+      stat:
+        path: /hosts
+      register: hosts_file_check
+      ignore_errors: true
+
+    - name: Crear archivo /hosts si no existe en las máquinas
+      raw: sudo touch /hosts
+      when: hosts_file_check.stat.exists == false
+
+    - name: Mostrar estado de Ansible en las máquinas
+      debug:
+        msg: |
+          {% if ansible_check.stat.exists %}
+          Ansible está instalado en la máquina
+          {% else %}
+          Ansible NO está instalado en la máquina
+          {% endif %}

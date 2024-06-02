@@ -1,0 +1,53 @@
+- hosts: nodos
+  gather_facts: no
+  tasks:
+
+    - name: Verificar si nmap está instalado
+      raw: dpkg-query -W -f='${Status}' nmap | grep -q "install ok installed" || echo 'nmap_not_installed'
+      register: nmap_check
+      ignore_errors: yes
+
+    - name: Instalar nmap si no está instalado
+      raw: sudo apt-get update && sudo apt-get install -y nmap
+      when: "'nmap_not_installed' in nmap_check.stdout"
+
+    - name: Verificar si DHCP (isc-dhcp-server) está instalado
+      raw: dpkg-query -W -f='${Status}' isc-dhcp-server | grep -q "install ok installed" || echo 'dhcp_not_installed'
+      register: dhcp_check
+      ignore_errors: yes
+
+    - name: Instalar DHCP (isc-dhcp-server) si no está instalado
+      raw: sudo apt-get install -y isc-dhcp-server
+      when: "'dhcp_not_installed' in dhcp_check.stdout"
+
+    - name: Verificar si DNS (bind9) está instalado
+      raw: dpkg-query -W -f='${Status}' bind9 | grep -q "install ok installed" || echo 'dns_not_installed'
+      register: dns_check
+      ignore_errors: yes
+
+    - name: Instalar DNS (bind9) si no está instalado
+      raw: sudo apt-get install -y bind9
+      when: "'dns_not_installed' in dns_check.stdout"
+
+    - name: Verificar instalación final de nmap
+      raw: dpkg-query -W -f='${Status}' nmap | grep -q "install ok installed" && echo 'nmap_installed' || echo 'nmap_not_installed'
+      register: final_nmap_check
+
+    - name: Verificar instalación final de DHCP (isc-dhcp-server)
+      raw: dpkg-query -W -f='${Status}' isc-dhcp-server | grep -q "install ok installed" && echo 'dhcp_installed' || echo 'dhcp_not_installed'
+      register: final_dhcp_check
+
+    - name: Verificar instalación final de DNS (bind9)
+      raw: dpkg-query -W -f='${Status}' bind9 | grep -q "install ok installed" && echo 'dns_installed' || echo 'dns_not_installed'
+      register: final_dns_check
+
+    - name: Mostrar estado de los paquetes instalados
+      debug:
+        msg: |
+          {% if 'nmap_installed' in final_nmap_check.stdout and 
+                'dhcp_installed' in final_dhcp_check.stdout and 
+                'dns_installed' in final_dns_check.stdout %}
+          Todo instalado
+          {% else %}
+          Faltan paquetes por instalar
+          {% endif %}
